@@ -1,0 +1,109 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: cimg/python:3.9
+
+    working_directory: ~/project
+
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            make install
+      - run:
+          name: run lint
+          command: |
+            . venv/bin/activate
+            make lint > lint_log.txt
+            cat lint_log.txt
+      - run:
+          name: build container
+          command: |
+            docker build --tag capstone .
+      - run:
+          name: push container
+          command: |
+            dockerpath="adamol/capstone:${CIRCLE_WORKFLOW_ID}"
+            docker tag capstone $dockerpath
+
+            docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS
+            docker push $dockerpath
+      - run:
+          name: replace string in deployment with new version
+          command: |
+            sed -i "s/@VERSION/${CIRCLE_WORKFLOW_ID}/g" deployment.yml
+      - run:
+          name: update current color in memstash an workflow id
+          command: |
+            CURRENT_COLOR=$(curl -H "token: 6a3ae534-27b0-46a8-832e-23ee1d810653" \
+                                --request GET https://api.memstash.io/values/CURRENT_COLOR)
+
+            NEW_COLOR="blue"
+            if $CURRENT_COLOR == "blue"
+            then
+              $NEW_COLOR = "green"
+            fi
+
+            curl -H "Content-Type: text/plain" \
+              -H "token: 6a3ae534-27b0-46a8-832e-23ee1d810653" \
+              --request PUT \
+              --data "$NEW_COLOR" \
+              https://api.memstash.io/values/CURRENT_COLOR
+
+            curl -H "Content-Type: text/plain" \
+              -H "token: 6a3ae534-27b0-46a8-832e-23ee1d810653" \
+              --request PUT \
+              --data "${CIRCLE_WORKFLOW_ID}" \
+              "https://api.memstash.io/values/${NEW_COLOR}"
+      - run:
+          name: install aws cli
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+      - run:
+          name: Install and confgure kubectl aws-iam-authenticator
+          command: |
+            curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.10.3/2018-07-26/bin/linux/amd64/aws-iam-authenticator
+            sudo chmod +x ./aws-iam-authenticator
+            sudo cp ./aws-iam-authenticator /bin/aws-iam-authenticator
+      - run:
+          name: Get the kubeconfig file
+          command: |
+            export KUBECONFIG=$HOME/.kube/kubeconfig
+            aws eks --region $AWS_DEFAULT_REGION update-kubeconfig --name $EKS_CLUSTER_NAME
+      - run:
+          name: Install and confgure kubectl
+          command: sudo curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && sudo chmod +x /usr/local/bin/kubectl
+      - run:
+          name: deploy container
+          command: |
+            kubectl apply -f deployment.yml
+      - run:
+          name: verify page still runs or rollback if not
+          command: |
+            if curl -Is http://my-page | head -n 1 | grep '200' OK
+            then
+              echo "App still works"
+            else
+              CURRENT_COLOR=$(curl -H "token: 6a3ae534-27b0-46a8-832e-23ee1d810653" \
+                                  --request GET https://api.memstash.io/values/CURRENT_COLOR)
+
+              PREVIOUS_COLOR="blue"
+              if $CURRENT_COLOR == "blue"
+              then
+                $PREVIOUS_COLOR = "green"
+              fi
+
+              OLD_WORKFLOW_ID=$(curl -H "token: 6a3ae534-27b0-46a8-832e-23ee1d810653" \
+                                   --request GET "https://api.memstash.io/values/${PREVIOUS_COLOR}")
+
+              sed -i "s/${CIRCLE_WORKFLOW_ID}/${OLD_WORKFLOW_ID}/g" deployment.yml
+
+              kubectl apply -f deployment.yml
+            fi
