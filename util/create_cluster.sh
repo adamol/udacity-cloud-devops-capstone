@@ -1,5 +1,5 @@
 eksctl create cluster \
-	--name capstone \
+	--name $1 \
 	--node-type t2.small \
 	--nodes 2 \
 	--nodes-min 1 \

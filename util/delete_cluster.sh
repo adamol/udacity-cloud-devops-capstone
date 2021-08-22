@@ -1,1 +1,1 @@
-eksctl delete cluster capstone
+eksctl delete cluster $1
