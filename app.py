@@ -1,16 +1,16 @@
 from flask import Flask
+from flask import Response
 import cowsay
 
 app = Flask(__name__)
 
 @app.route("/")
 def hello_world():
-    output = cowsay.get_output_string('cow', 'Hello World')
-    resp = flask.Response(output)
+    response = Response(cowsay.get_output_string('cow', 'Hello World'))
 
-    resp.headers['Content-Type'] = 'text/plain'
+    response.headers['Content-Type'] = 'text/plain'
 
-    return resp
+    return response
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8080, debug=True) # specify port=80
+    app.run(host='0.0.0.0', port=80, debug=True) # specify port=80
