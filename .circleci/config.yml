@@ -15,12 +15,12 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             make install
-            #- run:
-            #    name: run lint
-            #    command: |
-            #      . venv/bin/activate
-            #      make lint > lint_log.txt
-            #      cat lint_log.txt
+      - run:
+          name: run lint
+          command: |
+            . venv/bin/activate
+            make lint > lint_log.txt
+            cat lint_log.txt
       - run:
           name: build container
           command: |
