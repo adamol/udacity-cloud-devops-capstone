@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def hello_world():
-    response = Response(cowsay.get_output_string('cow', 'This is changed'))
+    response = Response(cowsay.get_output_string('cow', 'Hello World'))
 
     response.headers['Content-Type'] = 'text/plain'
 
