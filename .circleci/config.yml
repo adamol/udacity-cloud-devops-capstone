@@ -22,7 +22,7 @@ commands:
             OLD_WORKFLOW_ID=$(curl -H "token: 6a3ae534-27b0-46a8-832e-23ee1d810653" \
                                  --request GET "https://api.memstash.io/values/${PREVIOUS_COLOR}")
 
-            sed -i "s/${workflowID}/${OLD_WORKFLOW_ID}/g" deployment.yml
+            sed -i "s/<< parameters.workflowID >>/${OLD_WORKFLOW_ID}/g" deployment.yml
 
             kubectl apply -f deployment.yml
 jobs:
