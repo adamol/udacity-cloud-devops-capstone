@@ -31,7 +31,7 @@ commands:
 
             sed -i "s/<< parameters.workflowID >>/${OLD_WORKFLOW_ID}/g" deployment.yml
 
-            cat deployment.yml
+            cat deployment.yml | grep image
 
             kubectl apply -f deployment.yml
 jobs:
