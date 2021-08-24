@@ -13,16 +13,25 @@ commands:
             CURRENT_COLOR=$(curl -H "token: 6a3ae534-27b0-46a8-832e-23ee1d810653" \
                                 --request GET https://api.memstash.io/values/CURRENT_COLOR)
 
+            echo $CURRENT_COLOR
+
             PREVIOUS_COLOR="blue"
             if $CURRENT_COLOR == "blue"
             then
               $PREVIOUS_COLOR = "green"
             fi
 
+            echo $PREVIOUS_COLOR
+
             OLD_WORKFLOW_ID=$(curl -H "token: 6a3ae534-27b0-46a8-832e-23ee1d810653" \
                                  --request GET "https://api.memstash.io/values/${PREVIOUS_COLOR}")
 
+            echo << parameters.workflowID >>
+            echo $OLD_WORKFLOW_ID
+
             sed -i "s/<< parameters.workflowID >>/${OLD_WORKFLOW_ID}/g" deployment.yml
+
+            cat deployment.yml
 
             kubectl apply -f deployment.yml
 jobs:
