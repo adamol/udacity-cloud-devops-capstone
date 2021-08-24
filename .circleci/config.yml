@@ -89,7 +89,7 @@ jobs:
           command: |
             # make sure app is updated
             sleep 60
-            if curl -Is http://my-page | head -n 1 | grep '200' OK
+            if curl -Is http://$LOADBALANCER_DNS | head -n 1 | grep '200' OK
             then
               echo "App still works"
             else
