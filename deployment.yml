@@ -15,14 +15,14 @@ spec:
     rollingUpdate:
       maxSurge: 25%
       maxUnavailable: 25%
-  minReadySeconds: 60
+  minReadySeconds: 5
   progressDeadlineSeconds: 1800
   template:
     metadata:
       labels:
         app: capstone
     spec:
-      terminationGracePeriodSeconds: 60
+      terminationGracePeriodSeconds: 5
       containers:
         - name: capstone
           image: adamol/capstone:@VERSION
@@ -35,7 +35,7 @@ spec:
               scheme: HTTP
               port: 80
             successThreshold: 1
-            periodSeconds: 30
+            periodSeconds: 3
             failureThreshold: 3
             timeoutSeconds: 10
 
