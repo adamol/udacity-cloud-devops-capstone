@@ -78,9 +78,9 @@ jobs:
                                 --request GET https://api.memstash.io/values/CURRENT_COLOR)
 
             NEW_COLOR="blue"
-            if $CURRENT_COLOR == "blue"
+            if [[ $CURRENT_COLOR == "blue" ]]
             then
-              $NEW_COLOR = "green"
+              NEW_COLOR="green"
             fi
 
             curl -H "Content-Type: text/plain" \
