@@ -1,4 +1,30 @@
 version: 2.1
+commands:
+  rollback:
+    description: rolls back blue green deployment
+    parameters:
+      workflowID:
+        type: string
+    steps:
+      - run:
+          name: roll back
+          when: on_fail
+          command: |
+            CURRENT_COLOR=$(curl -H "token: 6a3ae534-27b0-46a8-832e-23ee1d810653" \
+                                --request GET https://api.memstash.io/values/CURRENT_COLOR)
+
+            PREVIOUS_COLOR="blue"
+            if $CURRENT_COLOR == "blue"
+            then
+              $PREVIOUS_COLOR = "green"
+            fi
+
+            OLD_WORKFLOW_ID=$(curl -H "token: 6a3ae534-27b0-46a8-832e-23ee1d810653" \
+                                 --request GET "https://api.memstash.io/values/${PREVIOUS_COLOR}")
+
+            sed -i "s/${workflowID}/${OLD_WORKFLOW_ID}/g" deployment.yml
+
+            kubectl apply -f deployment.yml
 jobs:
   build:
     docker:
@@ -89,23 +115,11 @@ jobs:
           command: |
             # make sure app is updated
             sleep 60
-            if curl -Is http://$LOADBALANCER_DNS | head -n 1 | grep '200' OK
+            if curl -Is http://$LOADBALANCER_DNS | head -n 1 | grep "200 OK"
             then
               echo "App still works"
             else
-              CURRENT_COLOR=$(curl -H "token: 6a3ae534-27b0-46a8-832e-23ee1d810653" \
-                                  --request GET https://api.memstash.io/values/CURRENT_COLOR)
-
-              PREVIOUS_COLOR="blue"
-              if $CURRENT_COLOR == "blue"
-              then
-                $PREVIOUS_COLOR = "green"
-              fi
-
-              OLD_WORKFLOW_ID=$(curl -H "token: 6a3ae534-27b0-46a8-832e-23ee1d810653" \
-                                   --request GET "https://api.memstash.io/values/${PREVIOUS_COLOR}")
-
-              sed -i "s/${CIRCLE_WORKFLOW_ID}/${OLD_WORKFLOW_ID}/g" deployment.yml
-
-              kubectl apply -f deployment.yml
+              exit 1
             fi
+      - rollback:
+          workflowID: ${CIRCLE_WORKFLOW_ID}
