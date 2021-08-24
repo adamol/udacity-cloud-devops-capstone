@@ -19,8 +19,7 @@ jobs:
           name: run lint
           command: |
             . venv/bin/activate
-            make lint > lint_log.txt
-            cat lint_log.txt
+            make lint
       - run:
           name: build container
           command: |
@@ -88,6 +87,8 @@ jobs:
       - run:
           name: verify page still runs or rollback if not
           command: |
+            # make sure app is updated
+            sleep 60
             if curl -Is http://my-page | head -n 1 | grep '200' OK
             then
               echo "App still works"
