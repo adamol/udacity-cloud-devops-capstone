@@ -16,9 +16,9 @@ commands:
             echo $CURRENT_COLOR
 
             PREVIOUS_COLOR="blue"
-            if $CURRENT_COLOR == "blue"
+            if [[ $CURRENT_COLOR == "blue" ]]
             then
-              $PREVIOUS_COLOR = "green"
+              PREVIOUS_COLOR="green"
             fi
 
             echo $PREVIOUS_COLOR
